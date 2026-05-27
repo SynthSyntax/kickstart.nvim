@@ -124,6 +124,21 @@ do
   --  See `:help 'clipboard'`
   vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
 
+  -- Over SSH there is no local X display, so route the clipboard through OSC 52
+  -- terminal escape sequences. kitty intercepts these and writes to the local
+  -- clipboard; zellij passes them through.
+  vim.g.clipboard = {
+    name = 'OSC 52',
+    copy = {
+      ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+      ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
+    },
+    paste = {
+      ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+      ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
+    },
+  }
+
   -- Enable break indent
   vim.o.breakindent = true
 
@@ -212,6 +227,9 @@ do
   -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
   -- or just use <C-\><C-n> to exit terminal mode
   vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+
+  -- Auto-copy a mouse drag-selection to the system clipboard on release.
+  vim.keymap.set('x', '<LeftRelease>', '"+y', { desc = 'Copy mouse selection to clipboard' })
 
   -- TIP: Disable arrow keys in normal mode
   -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
